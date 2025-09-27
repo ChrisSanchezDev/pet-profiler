@@ -81,8 +81,6 @@ def logout():
         f'https://{os.getenv("AUTH0_DOMAIN")}/v2/logout?returnTo=http://localhost:5000'
     )
 
-        'https://dev-77sq72oygyojf28x.us.auth0.com/v2/logout?returnTo=http://127.0.0.1:5000'
-    )
 
 # --- Run app ---
 if __name__ == "__main__":
