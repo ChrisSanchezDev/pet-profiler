@@ -80,7 +80,7 @@ class User(db.Model):
 
     # The reason we use both id & auth0_sub is that Auth0 will give us a user's ID, given that, we
     # can look for that auth0 ID in the table, which will be paired to a user ID, this tells us that
-    # this signed in person is attached to this account. Primary key will also focus on using that
+  # this signed in person is attached to this account. Primary key will also focus on using that
     # to identify things like pets, settings, etc. for a specific account.
 
     # db.relationship('Pet',...):
