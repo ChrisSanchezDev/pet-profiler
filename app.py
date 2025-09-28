@@ -1,6 +1,3 @@
-# Critter Card
-# Doggy Docs
-
 # Importing the core building blocks from the Flask library that we'll need to create pages,
 # show HTML, handle forms, and redirect users
 # Flask: class for creating the application instance
@@ -14,6 +11,7 @@
 # url_for: Builds URLs for you (i.e. you can type your url like url_for('pet profile', pet_id = 1)).
 # This ensures that you dont have any broken links anywhere.
 from flask import Flask, render_template, request, redirect, url_for
+from authlib.integrations.flask_client import OAuth
 # SQLAlchemy: Designed for database interactions on flask
 # This will use a database connection object that will be a point of contact for all operations
 # (i.e. defining models, adding data, and saving data).
@@ -22,8 +20,61 @@ from flask_sqlalchemy import SQLAlchemy
 # Provies tools to interact w the operating system. Specifically, for determining the location
 # of app.py for the database. 
 import os
+from dotenv import load_dotenv
 
+# Load environment variables from .env
+load_dotenv()
+from dotenv import load_dotenv
+load_dotenv()  # load .env
+import os
+
+from flask import Flask, redirect, session
+from authlib.integrations.flask_client import OAuth
+
+# --- Flask app setup ---
 app = Flask(__name__)
+app.secret_key = 'RANDOM_SECRET_KEY'  # Replace with a long random string
+
+# Auth0 setup
+oauth = OAuth(app)
+auth0 = oauth.register(
+    'auth0',
+    client_id=os.getenv('AUTH0_CLIENT_ID'),
+    client_secret=os.getenv('AUTH0_CLIENT_SECRET'),
+    api_base_url=f'https://{os.getenv("AUTH0_DOMAIN")}',
+    access_token_url=f'https://{os.getenv("AUTH0_DOMAIN")}/oauth/token',
+    authorize_url=f'https://{os.getenv("AUTH0_DOMAIN")}/authorize',
+    client_kwargs={'scope': 'openid profile email'}
+)
+
+# Routes
+app.secret_key = os.getenv("SECRET_KEY", "some_random_secret_string")
+
+# --- Auth0 setup ---
+oauth = OAuth(app)
+auth0 = oauth.register(
+    'auth0',
+    client_id="QLuukUUxo4jA3QZHiOnDAlRJU7qJLAMU",
+    client_secret="X22pMRLhdJr-ET7INjfYqzQYZcZCtTSJB-tpvm40F_L7Q3YLoGf1C0QkH2h9DgmZ",
+    client_kwargs={'scope': 'openid profile email'},
+    server_metadata_url=f'https://{os.getenv("AUTH0_DOMAIN")}/.well-known/openid-configuration'
+)
+
+# --- Routes ---
+
+
+
+
+# The homepage of the website "website.com/"
+@app.route("/")
+def home():
+    return 
+
+@app.route("/pet/<int:pet_id>") # Change pet_id later
+def pet(pet_id):
+
+
+# This conditional is only true if you run Python on your on computer
 
 # This initializes basedir to the absolute path of the directory in which our running Python file is
 # which in this case is app.py. This ensures the data is saved properly from this file.
@@ -117,16 +168,47 @@ def init_db_command():
     # Simple user feedback to know the tables are created within the terminal so that we know it
     # was done correctly.
     print('Initialized the dataase.')
-
-# The homepage of the website "website.com/"
+    
+  
+# Auto-redirect home to login
 @app.route("/")
 def home():
-    return 
+        return '<a href="/login">Login with Auth0</a>'
 
-@app.route("/pet/<int:pet_id>") # Change pet_id later
-def pet(pet_id):
+@app.route("/login")
+def login():
+    return auth0.authorize_redirect(redirect_uri=os.getenv('AUTH0_CALLBACK_URL'))
+
+# Login route
+@app.route("/login")
+def login():
+    return auth0.authorize_redirect(redirect_uri="http://127.0.0.1:5000/callback")
+
+# Callback route
+@app.route("/callback")
+def callback():
+    token = auth0.authorize_access_token()
+    resp = auth0.get('userinfo')
+    user_info = resp.json()
+    session['user'] = user_info
+    return redirect("/dashboard")
+
+# Dashboard route
+@app.route("/dashboard")
+def dashboard():
+    if 'user' not in session:
+        return redirect("/login")
+    return f"Hello {session['user']['name']}! Welcome to your dashboard."
+
+# Logout route
+@app.route("/logout")
+def logout():
+    session.clear()
+    return redirect(
+        f'https://{os.getenv("AUTH0_DOMAIN")}/v2/logout?returnTo=http://localhost:5000'
+    )
 
 
-# This conditional is only true if you run Python on your on computer
+# --- Run app ---
 if __name__ == "__main__":
     app.run(debug=True)
