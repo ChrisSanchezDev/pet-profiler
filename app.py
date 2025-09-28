@@ -66,12 +66,10 @@ auth0 = oauth.register(
 
 
 # The homepage of the website "website.com/"
-@app.route("/")
-def home():
-    return 
 
 @app.route("/pet/<int:pet_id>") # Change pet_id later
 def pet(pet_id):
+    pass
 
 
 # This conditional is only true if you run Python on your on computer
@@ -178,11 +176,6 @@ def home():
 @app.route("/login")
 def login():
     return auth0.authorize_redirect(redirect_uri=os.getenv('AUTH0_CALLBACK_URL'))
-
-# Login route
-@app.route("/login")
-def login():
-    return auth0.authorize_redirect(redirect_uri="http://127.0.0.1:5000/callback")
 
 # Callback route
 @app.route("/callback")
