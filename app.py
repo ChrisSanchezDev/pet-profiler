@@ -1,56 +1,16 @@
-# Importing the core building blocks from the Flask library that we'll need to create pages,
-# show HTML, handle forms, and redirect users
-# Flask: class for creating the application instance
-# render_template: Generates HTML pages. Takes in the name of an HTML file from template and
-# combines it w python variables (like name or icon) and produces a final HTML page based on those
-# two.
-# request: Object that holds all the info about an incoming request. (i.e. User clicks save on pet
-# name)
-# redirect: Sends users to a diff URL. Used for redirecting users to the new homepage w their
-# pets name shown.
-# url_for: Builds URLs for you (i.e. you can type your url like url_for('pet profile', pet_id = 1)).
-# This ensures that you dont have any broken links anywhere.
-from flask import Flask, render_template, request, redirect, url_for
-from authlib.integrations.flask_client import OAuth
-# SQLAlchemy: Designed for database interactions on flask
-# This will use a database connection object that will be a point of contact for all operations
-# (i.e. defining models, adding data, and saving data).
-# Model: blueprint for the database
-from flask_sqlalchemy import SQLAlchemy
-# Provies tools to interact w the operating system. Specifically, for determining the location
-# of app.py for the database. 
-import os
-from dotenv import load_dotenv
-
-# Load environment variables from .env
-load_dotenv()
-from dotenv import load_dotenv
-load_dotenv()  # load .env
-import os
-
-from flask import Flask, redirect, session
+from flask import Flask, redirect, url_for, session
 from authlib.integrations.flask_client import OAuth
 
-# --- Flask app setup ---
 app = Flask(__name__)
-app.secret_key = 'RANDOM_SECRET_KEY'  # Replace with a long random string
+app.secret_key = "write1"  # replace with a real secret in production
 
-# Auth0 setup
-oauth = OAuth(app)
-auth0 = oauth.register(
-    'auth0',
-    client_id=os.getenv('AUTH0_CLIENT_ID'),
-    client_secret=os.getenv('AUTH0_CLIENT_SECRET'),
-    api_base_url=f'https://{os.getenv("AUTH0_DOMAIN")}',
-    access_token_url=f'https://{os.getenv("AUTH0_DOMAIN")}/oauth/token',
-    authorize_url=f'https://{os.getenv("AUTH0_DOMAIN")}/authorize',
-    client_kwargs={'scope': 'openid profile email'}
-)
+# Auth0 configuration
+AUTH0_DOMAIN = "dev-77sq72oygyojf28x.us.auth0.com"
+AUTH0_CLIENT_ID = "QLuukUUxo4jA3QZHiOnDAlRJU7qJLAMU"
+AUTH0_CLIENT_SECRET = "X22pMRLhdJr-ET7INjfYqzQYZcZCtTSJB-tpvm40F_L7Q3YLoGf1C0QkH2h9DgmZ"
+AUTH0_CALLBACK_URL = "http://127.0.0.1:5000/callback"
+AUTH0_LOGOUT_URL = "http://127.0.0.1:5000"
 
-# Routes
-app.secret_key = os.getenv("SECRET_KEY", "some_random_secret_string")
-
-# --- Auth0 setup ---
 oauth = OAuth(app)
 auth0 = oauth.register(
     'auth0',
@@ -185,6 +145,7 @@ def login():
 @app.route("/callback")
 def callback():
     token = auth0.authorize_access_token()
+
     resp = auth0.get('userinfo')
     user_info = resp.json()
     session['user'] = user_info
@@ -298,6 +259,6 @@ def setup():
     return "Test user and pet created."
                      
 
-# --- Run app ---
+
 if __name__ == "__main__":
     app.run(debug=True)
