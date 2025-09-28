@@ -102,6 +102,10 @@ class Pet(db.Model):
     # icon image.
     icon_url = db.Column(db.String(200), nullable=False, default='dog_icon.png')
 
+    # NEW ATTRIBUTES:
+    animal_type = db.Column(db.String(50))
+    dob = db.Column(db.String(50))
+
     # db.ForeignKey: This is the key that links the tables. The number in this column MUST
     # match a number that exists in the id column of the user table.
     # nullable=False: Every pet must have an owner
@@ -141,16 +145,120 @@ def login():
 @app.route("/callback")
 def callback():
     token = auth0.authorize_access_token()
-    # <--- IMPORTANT: use the FULL URL here
-    resp = auth0.get('https://dev-77sq72oygyojf28x.us.auth0.com/userinfo')
-    userinfo = resp.json()
-    session["user"] = userinfo
-    return f"Hello {userinfo['name']}!"
 
+    resp = auth0.get('userinfo')
+    user_info = resp.json()
+    session['user'] = user_info
+    return redirect("/dashboard")
+
+# Dashboard route
+# @app.route("/dashboard")
+# def dashboard():
+#     if 'user' not in session:
+#         return redirect("/login")
+#     return f"Hello {session['user']['name']}! Welcome to your dashboard."
+@app.route('/dashboard')
+def dashboard():
+    # --- AUTH0 Logic would go here to get the real user ---
+    # For now, we'll pretend we are user #1.
+    user = User.query.get(1)
+
+    # Get all pets owned by this user
+    user_pets = user.pets
+    
+    return render_template('dashboard.html', pets=user_pets)
+
+# Logout route
 @app.route("/logout")
 def logout():
     session.clear()
-    return redirect(f"{AUTH0_LOGOUT_URL}")
+    return redirect(
+        f'https://{os.getenv("AUTH0_DOMAIN")}/v2/logout?returnTo=http://localhost:5000'
+    )
+
+# Creating a webpage per specific pet.
+@app.route('/pet/<int:pet_id>')
+def pet_profile(pet_id):
+    # TODO: Put Auth0 logic in here
+    # current_user_auth0_sub = auth0.get_user_id()
+    # pretend_user = User.query.filter_by(auth0_sub=current_user_auth0_sub).first()
+    
+    # TODO: Find pet with matching ID in database
+    # Pet.query: Accesses the query interface for our Pet model, which allows us to search thru the
+    # pet table.
+    # .get_or_404(): Does .get() for the ID, however, if it doesn't exist, a standard 404 Not Found
+    # will be given.
+    pet_to_show = Pet.query.get_or_404(pet_id)
+
+    # render_template(): renders a given template in the templates folder.
+    # 'pet_profile.html': the template within the templates folder
+    # pet=pet_to_show: The value of the pet variable will be the pet_to_show object we got from the
+    # database.
+    return render_template('pet_profile.html', pet=pet_to_show)
+
+@app.route('/add_pet', methods=['POST'])
+def add_pet():
+    # TODO: Auth0 logic
+    user = User.query.get(1)
+
+    # Get data from the submitted form
+    pet_name = request.form['petName']
+    animal_type = request.form['animalType']
+    date_of_birth = request.form['dob']
+
+    # Create a new Pet object
+    new_pet = Pet(name=pet_name,
+                  animal_type=animal_type,
+                  dob=date_of_birth,
+                  owner=user)
+    
+    # Add to our database
+    db.sesison.add(new_pet)
+    db.session.commit()
+
+    return redirect(url_for('dashboard'))
+
+def update_pet(pet_id):
+    # TODO: Put Auth0 logic in here
+    # Ensuring logged-in user owns this pet before updating
+
+    # The pet we want to update
+    pet_to_update = Pet.query.get_or_404(pet_id)
+
+    # Get the new name from the form data that was submitted
+    # The 'pet_name' matches the 'name' attribute within our HTML <input>
+    new_name = request.form['pet_name']
+
+    # Update the pet's name in our new database session
+    pet_to_update.name = new_name
+
+    # Commit: saves the change to the database file
+    db.session.commit()
+
+    # Redirect the user back to their pet's profile to see the changes made.
+    return redirect(url_for('pet_profile', pet_id=pet_to_update.id))
+
+# --- TEMP TEST FUNCTIONS ---
+@app.route('/setup')
+def setup():
+    # Clean up old data
+    db.drop_all()
+    db.create_all()
+
+    # Fake user w/ ID 1
+    # Fake auth0_sub
+    test_user = User(auth0_sub="auth0|12345ABC")
+    db.session.add(test_user)
+    db.session.commit() # Save to get the user's ID (1, since it's the first)
+
+    # Create a fake pet linked to our test user
+    bobby = Pet(name="Bobby", owner=test_user, animal_type="Dog", dob="2023-01-15")
+    db.session.add(bobby)
+    db.session.commit()
+
+    return "Test user and pet created."
+                     
+
 
 if __name__ == "__main__":
     app.run(debug=True)
