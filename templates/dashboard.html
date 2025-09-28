@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pet Dashboard</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='assets/css/main.css') }}" />
+  <noscript><link rel="stylesheet" href="{{ url_for('static', filename='assets/css/noscript.css') }}" /></noscript>
+</head>
+<body class="is-preload">
+  <div id="wrapper" class="fade-in">
+    <div class="dashboard-container">
+      <h1>My Pets</h1>
+
+      <div class="pets-section" id="pets-section">
+        {% for pet in pets %}
+          <a href="{{ url_for('pet_profile', pet_id=pet.id) }}" class="pet-btn">{{ pet.name }}</a>
+        {% endfor %}
+      </div>
+
+      <button id="add-pet-btn" class="add-btn">+ Add New Pet</button>
+
+      <div id="pet-form" class="form-container hidden">
+        <h2>Register a New Pet</h2>
+        <form id="registerPetForm" action="{{ url_for('add_pet') }}" method="POST">
+          <div class="input-group">
+            <label for="petName">Pet Name</label>
+            <input type="text" id="petName" name="petName" required>
+          </div>
+
+          <div class="input-group">
+            <label for="animalType">Animal Type</label>
+            <select id="animalType" name="animalType" required>
+              <option value="">--Select--</option>
+              <option value="dog">Dog</option>
+              <option value="cat">Cat</option>
+              <option value="rabbit">Rabbit</option>
+              <option value="bird">Bird</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+
+          <div class="input-group">
+            <label for="dob">Date of Birth</label>
+            <input type="date" id="dob" name="dob" required>
+          </div>
+
+          <button type="submit" class="btn">Save Pet</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // This part is fine to keep, it just shows and hides the form.
+    const addPetBtn = document.getElementById('add-pet-btn');
+    const petForm = document.getElementById('pet-form');
+    
+    addPetBtn.addEventListener('click', () => {
+      petForm.classList.toggle('hidden');
+    });
+
+    // CHANGE #4: DELETE the JavaScript code that handled the form submission.
+    // Our form's "action" and "method" attributes handle this now.
+  </script>
+
+  <script src="{{ url_for('static', filename='assets/js/jquery.min.js') }}"></script>
+  <script src="{{ url_for('static', filename='assets/js/jquery.scrollex.min.js') }}"></script>
+  <script src="{{ url_for('static', filename='assets/js/jquery.scrolly.min.js') }}"></script>
+  <script src="{{ url_for('static', filename='assets/js/browser.min.js') }}"></script>
+  <script src="{{ url_for('static', filename='assets/js/breakpoints.min.js') }}"></script>
+  <script src="{{ url_for('static', filename='assets/js/util.js') }}"></script>
+  <script src="{{ url_for('static', filename='assets/js/main.js') }}"></script>
+</body>
+</html>
